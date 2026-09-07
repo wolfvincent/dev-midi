@@ -1,0 +1,22 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WOLF KROME MIDI Test</title>
+<style>body{font-family:-apple-system,sans-serif;background:#111;color:#eee;margin:0}main{max-width:800px;margin:auto;padding:22px}.card{background:#222;border-radius:16px;padding:16px;margin:14px 0}button,select{font-size:18px;padding:14px;margin:5px;border:0;border-radius:12px}button{background:#444;color:white}.primary{background:#087ff5}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.scene{width:100%;min-height:65px}#log{white-space:pre-wrap;color:#b7f7c5}</style></head>
+<body><main><h1>WOLF KROME MIDI TEST</h1>
+<div class="card"><button id="connect" class="primary">連接 MIDI</button><select id="output"></select><p>狀態：<b id="status">尚未連接</b></p></div>
+<div class="card"><h2>Timbre 1–4</h2><div class="grid" id="timbres"></div></div>
+<div class="card"><h2>Scene</h2><div class="grid">
+<button class="scene" onclick="scene([1,0,0,0])">Scene A<br>T1</button>
+<button class="scene" onclick="scene([0,1,0,0])">Scene B<br>T2</button>
+<button class="scene" onclick="scene([1,1,1,0])">Scene C<br>T1+T2+T3</button>
+<button class="scene" onclick="scene([0,0,0,1])">Scene D<br>T4</button>
+</div></div><div class="card"><h2>Log</h2><div id="log"></div></div>
+<script>
+let access,out; const q=x=>document.getElementById(x);
+function log(x){q("log").innerText=x+"\n"+q("log").innerText}
+async function connect(){try{access=await navigator.requestMIDIAccess({sysex:true});refresh();access.onstatechange=refresh;q("status").innerText="MIDI 權限已取得"}catch(e){q("status").innerText="失敗："+e.message}}
+function refresh(){let s=q("output");s.innerHTML="";for(const o of access.outputs.values()){let x=document.createElement("option");x.value=o.id;x.textContent=o.name||o.id;s.appendChild(x)}choose()}
+function choose(){out=access&&access.outputs.get(q("output").value);if(out)q("status").innerText="已選擇："+out.name}
+q("connect").onclick=connect;q("output").onchange=choose;
+function timbre(n,play){if(!out){alert("請先連接並選 KROME MIDI Output");return}let a=0x0B+n,v=play?0:1;out.send([0xF0,0x42,0x30,0,1,0x52,0x41,0,0,a,0,0x28,0,0,0,0,v,0xF7]);log("T"+n+" "+(play?"PLAY":"OFF"))}
+function scene(s){s.forEach((v,i)=>timbre(i+1,!!v))}
+for(let n=1;n<=4;n++){let d=document.createElement("div");d.innerHTML='<button onclick="timbre('+n+',true)">T'+n+' PLAY</button><button onclick="timbre('+n+',false)">T'+n+' OFF</button>';q("timbres").appendChild(d)}
+</script></main></body></html>
